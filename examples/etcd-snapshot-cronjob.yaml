@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-snapshot-daily-1540-kst
+  namespace: backup-system
+spec:
+  schedule: "40 15 * * *"
+  timeZone: Asia/Seoul
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          hostNetwork: true
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          containers:
+            - name: snapshot-and-upload
+              image: registry.k8s.io/etcd:3.6.8-0
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  # Portfolio example only.
+                  # 1. Create etcd snapshot.
+                  # 2. Generate SHA256SUMS.
+                  # 3. Upload to S3-compatible object storage.
+                  echo "create snapshot.db"
+                  echo "upload snapshot.db to object storage"

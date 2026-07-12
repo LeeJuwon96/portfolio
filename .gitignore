@@ -1,0 +1,14 @@
+.env
+*.pem
+*.key
+*.crt
+*.kubeconfig
+kubeconfig*
+secrets/
+*.dump
+*.tar.gz
+*.db
+SHA256SUMS
+node_modules/
+.DS_Store
+Thumbs.db

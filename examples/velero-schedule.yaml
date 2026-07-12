@@ -1,0 +1,13 @@
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: app-daily-1600-kst
+  namespace: velero
+spec:
+  schedule: "CRON_TZ=Asia/Seoul 0 16 * * *"
+  template:
+    includedNamespaces:
+      - web-service
+      - tailscale
+    snapshotVolumes: false
+    ttl: 720h0m0s
