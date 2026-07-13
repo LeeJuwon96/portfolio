@@ -101,8 +101,6 @@ mgmt 서버에서는 컨테이너로 실행되는 DB와 host volume을 백업했
 - 실제 운영 bucket 이름
 - `.env`, kubeconfig, certificate, private key
 
-자세한 내용은 [SECURITY.md](SECURITY.md)를 참고하세요.
-
 ## 배운 점
 
 백업에서 중요한 것은 단순히 백업 파일을 만드는 것이 아니라, 장애 상황에서 어떤 백업을 선택해 어떤 순서로 복구할 수 있는지 설명 가능한 구조를 만드는 것이라고 느꼈습니다.
