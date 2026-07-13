@@ -21,7 +21,6 @@ flowchart LR
     A -->|etcd snapshot| M
     B[mgmt server] -->|pg_dump / tar| M
     B -->|restic snapshot| M
-    M -->|mc mirror| S[AWS S3]
 ```
 
 ## MinIO bucket 설계
@@ -37,23 +36,12 @@ flowchart LR
 
 이렇게 분리하면 복구 시점에 "어떤 백업을 써야 하는지"를 빠르게 판단할 수 있습니다.
 
-## AWS S3 offsite mirror
+## AWS S3 생명주기 정책
 
-MinIO는 중앙 백업 저장소이지만, mgmt 서버 자체 장애가 발생하면 백업 저장소도 함께 영향을 받을 수 있습니다. 그래서 MinIO bucket을 AWS S3로 복제하는 구조를 추가했습니다.
-
-AWS S3에서는 수명 주기 정책을 적용해 장기 보관 비용을 낮출 수 있습니다.
-
-예시 정책:
-
-| 기간 | Storage Class |
-| --- | --- |
-| 0~30일 | S3 Standard |
-| 30일 이후 | S3 Standard-IA |
-| 90일 이후 | S3 Glacier Flexible Retrieval |
+AWS S3 버킷에는 생명주기 정책을 적용해 오래된 백업 객체의 장기 보관 비용을 줄이도록 구성했습니다.
 
 ## 설계 포인트
 
-- 최근 백업은 빠른 복구를 위해 MinIO와 S3 Standard에 유지
-- 오래된 백업은 S3 Lifecycle로 비용 최적화
+- 백업 대상별로 저장 위치와 복구 방법을 구분
+- AWS S3 생명주기 정책으로 장기 보관 비용 관리
 - 백업 산출물마다 checksum을 남겨 무결성 확인 가능
-- 백업 생성 시간은 KST로 통일해 운영자가 혼동하지 않도록 구성
