@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>acer-aio + acer-mgmt 런타임 리소스 사용량 분석 리포트</title>
+  <style>
+    :root { --bg:#0b1220; --card:#111a2e; --text:#e8eefc; --sub:#9fb0d1; --line:#24314f; --bad:#ff9b8f; --warn:#ffd67a; --ok:#79e0a6; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 22px; }
+    h1,h2,h3 { margin: 0 0 12px; }
+    h1 { font-size: 26px; }
+    h2 { border-left: 6px solid #5aa6ff; padding-left: 10px; margin-top: 24px; }
+    .meta { color: var(--sub); margin-top: 2px; }
+    .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 14px 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap: 14px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid var(--line); padding: 8px; text-align: left; font-size: 14px; }
+    th { background: #17213a; color: #d7e2ff; }
+    .status { display:inline-block; padding:2px 8px; border-radius: 999px; font-size:12px; }
+    .ok { background: #0d4f37; color: #c7ffdd; }
+    .warn { background: #573d13; color: #ffeab6; }
+    .bad { background: #5a1a19; color: #ffd5d2; }
+    details { margin: 10px 0; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: #0e1527; }
+    details pre { white-space: pre-wrap; word-break: break-word; max-height: 420px; overflow: auto; }
+    .kpi { display:flex; gap: 16px; flex-wrap: wrap; }
+    .kpi .item { background:#0f1730; border:1px solid var(--line); border-radius:10px; padding:10px; min-width:210px; }
+    .kpi b { font-size: 21px; display:block; margin-bottom:4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>acer-aio / acer-mgmt 단일 런타임 리소스 분석 리포트</h1>
+    <p class="meta">수집 기준: 실시간 스냅샷(실행 시점 기준). 대상: <strong>실제 사용중인 프로세스/컨테이너/파드/VM 리소스</strong></p>
+
+    <div class="panel">
+      <h2>요약</h2>
+      <div class="kpi">
+        <div class="item">
+          <span class="status bad">AIO: 주의</span>
+          <b>CPU 과부하 징후</b>
+          <div>Load Avg 6.52 / 5.39 / 4.91 (8 vCPU 호스트에서 높음)</div>
+        </div>
+        <div class="item">
+          <span class="status ok">MGMT: 보통</span>
+          <b>클러스터 안정성 우수</b>
+          <div>노드 1개 Ready, CPU 72m, MEM 2755Mi (약 4%)</div>
+        </div>
+        <div class="item">
+          <span class="status warn">공통</span>
+          <b>컨테이너 메모리 집중</b>
+          <div>mgmt의 GitLab, SonarQube, Elasticsearch, Logstash가 상위 메모리 사용량을 차지</div>
+        </div>
+      </div>
+      <p class="meta">AIO는 kubernetes 접근 시 기본 kubeconfig(`~/.kube/config`)가 아니고 `~/.kube/acer-kubeadm.yaml` 파일을 직접 지정해야 하며, mgmt는 기본 kubeconfig로 `k3d-mgmt` 컨텍스트가 정상 동작합니다.</p>
+    </div>
+
+    <div class="panel">
+      <h2>0) K8s 접근 경로 보강 (vmv 기반 확인)</h2>
+      <p class="meta">요청한 “쿠베 컨피그가 .kube에 있음” 조건을 반영하여 수집 경로를 재정리했습니다.</p>
+      <div class="grid">
+        <div>
+          <h3>acer-aio 확인</h3>
+          <ol>
+            <li>접근 사용자: <code>ubuntu@172.16.1.10</code> (vmv/원격 세션 경유)</li>
+            <li><code>~/.kube</code> 존재 확인: <code>acer-kubeadm.yaml</code> 파일 존재</li>
+            <li>주의: 기본 경로 <code>~/.kube/config</code> 미사용 시 `kubectl`이 localhost(127.0.0.1:8080)로 조회되어 오탐/연결 실패 가능</li>
+            <li>권장 점검: 아래 방식으로 컨텍스트를 명시 조회</li>
+          </ol>
+          <pre style="margin-top:0">export KUBECONFIG=$HOME/.kube/acer-kubeadm.yaml
+kubectl --kubeconfig "$KUBECONFIG" config get-contexts -o name
+kubectl --kubeconfig "$KUBECONFIG" config current-context
+kubectl --kubeconfig "$KUBECONFIG" cluster-info</pre>
+        </div>
+        <div>
+          <h3>acer-mgmt 확인</h3>
+          <ol>
+            <li>접근 사용자: <code>user1@acer-mgmt</code></li>
+            <li><code>~/.kube/config</code> 존재 확인 및 기본 컨텍스트로 <code>k3d-mgmt</code> 동작</li>
+            <li>Node: <code>k3d-mgmt-server-0</code> Ready</li>
+            <li>권장 점검: AIO와 동일 시간대 스냅샷을 위해 매 분 단위 동일 배치 수집으로 drift 비교</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>1) Host 리소스 비교</h2>
+      <div class="grid">
+        <table>
+          <thead><tr><th>항목</th><th>acer-aio</th><th>acer-mgmt</th></tr></thead>
+          <tbody>
+            <tr><td>수집시간</td><td>2026-07-09 10:05:29 +00:00</td><td>2026-07-09 19:05:29 +09:00</td></tr>
+            <tr><td>Load Average</td><td>6.52, 5.39, 4.91</td><td>1.57, 1.73, 1.87</td></tr>
+            <tr><td>메모리(총/사용/공유/캐시/가용)</td><td>23Gi / 19Gi / 74Mi / 2.1Gi / 3.9Gi</td><td>62Gi / 31Gi / 827Mi / 31Gi / 30Gi</td></tr>
+            <tr><td>스왑</td><td>0B</td><td>31Gi 사용 1.1Gi, 가용 30Gi</td></tr>
+            <tr><td>디스크 사용률</td><td>247G 중 18%</td><td>899G 중 22%</td></tr>
+            <tr><td>핵심 리스크</td><td>높은 로드(큐/VM 활동 영향)</td><td>메모리 캐시/활성 컨테이너 동시 운영</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>2) 네트워크 트래픽(샘플: /proc/net/dev)</h2>
+        <h3>AIO 주요 인터페이스</h3>
+        <table>
+          <thead><tr><th>인터페이스</th><th>RX(bytes)</th><th>TX(bytes)</th><th>RX(pkt)</th><th>TX(pkt)</th></tr></thead>
+          <tbody>
+            <tr><td>lo</td><td>649,444,922</td><td>649,444,922</td><td>3,959,858</td><td>3,959,858</td></tr>
+            <tr><td>mgmt0</td><td>5,958,494</td><td>24,043,001</td><td>84,374</td><td>168,562</td></tr>
+            <tr><td>net0</td><td>10,372,042</td><td>44,894,356</td><td>26,554</td><td>40,958</td></tr>
+            <tr><td>ext0</td><td>745,050,324</td><td>1,536,024,281</td><td>2,117,836</td><td>1,709,245</td></tr>
+          </tbody>
+        </table>
+
+        <h3>MGMT 주요 인터페이스</h3>
+        <table>
+          <thead><tr><th>인터페이스</th><th>RX(bytes)</th><th>TX(bytes)</th><th>RX(pkt)</th><th>TX(pkt)</th></tr></thead>
+          <tbody>
+            <tr><td>lo</td><td>29,067,423,880</td><td>29,067,423,880</td><td>5,110,285</td><td>5,110,285</td></tr>
+            <tr><td>enp2s0</td><td>100,625,758,596</td><td>78,768,154,294</td><td>138,546,799</td><td>117,865,764</td></tr>
+            <tr><td>tailscale0</td><td>57,240,595,267</td><td>21,108,447,688</td><td>62,380,991</td><td>62,142,740</td></tr>
+            <tr><td>docker0</td><td>6,641,198,212</td><td>23,645,393,997</td><td>8,302,972</td><td>10,346,007</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>3) VM/Container/POD 가용성</h2>
+        <h3>AIO</h3>
+        <table>
+          <thead><tr><th>항목</th><th>상태</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Docker</td>
+              <td><span class="status warn">접근 제한</span></td>
+              <td>현재 사용자 소유권/권한으로는 socket 접근 불가. <strong>sudo docker</strong>로는 API 접근 가능(34 컨테이너 실행)</td>
+            </tr>
+            <tr>
+              <td>컨테이너 수</td>
+              <td>34 Running</td>
+              <td>이미지 33개</td>
+            </tr>
+            <tr>
+              <td>Kubernetes</td>
+              <td><span class="status warn">부분 설정</span></td>
+              <td>kubeconfig가 <code>~/.kube/acer-kubeadm.yaml</code>에 존재하나 컨텍스트/엔드포인트 지정 없이 기본 실행 시 localhost/8080로 폴백됨</td>
+            </tr>
+            <tr>
+              <td>VM(virsh)</td>
+              <td><span class="status bad">미설치</span></td>
+              <td>virsh command not found</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>MGMT</h3>
+        <table>
+          <thead><tr><th>항목</th><th>상태</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Docker</td>
+              <td><span class="status ok">정상</span></td>
+              <td>20 Core, 컨테이너 60개 Running</td>
+            </tr>
+            <tr>
+              <td>Kubernetes</td>
+              <td><span class="status ok">정상</span></td>
+              <td>k3d-mgmt 클러스터, control-plane Ready</td>
+            </tr>
+            <tr>
+              <td>VM(virsh)</td>
+              <td><span class="status bad">미설치</span></td>
+              <td>virsh command not found</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <div class="panel">
+      <h2>4) AIO: 프로세스 리소스 Top</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th><th>PID</th><th>User</th><th>CPU%</th><th>MEM%</th><th>RSS(KiB)</th><th>주요 프로세스</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>CPU Top-1</td><td>1396147</td><td>42439</td><td>307.0</td><td>0.5</td><td>138,312</td><td>rabbitmq-check 프로세스 (escript)</td></tr>
+          <tr><td>CPU Top-2</td><td>10504</td><td>42436</td><td>23.2</td><td>11.9</td><td>2,928,172</td><td>qemu-system-x86_64 (instance-00000001)</td></tr>
+          <tr><td>CPU Top-3</td><td>10810</td><td>42436</td><td>16.8</td><td>17.0</td><td>4,186,604</td><td>qemu-system-x86_64 (instance-00000002)</td></tr>
+          <tr><td>CPU Top-4</td><td>10965</td><td>42436</td><td>14.9</td><td>16.9</td><td>4,164,156</td><td>qemu-system-x86_64 (instance-00000003)</td></tr>
+          <tr><td>MEM Top-1</td><td>10810</td><td>42436</td><td>16.8</td><td>17.0</td><td>4,186,604</td><td>qemu VM</td></tr>
+          <tr><td>MEM Top-2</td><td>10965</td><td>42436</td><td>14.9</td><td>16.9</td><td>4,164,156</td><td>qemu VM</td></tr>
+          <tr><td>MEM Top-3</td><td>10504</td><td>42436</td><td>23.2</td><td>11.9</td><td>2,928,172</td><td>qemu VM</td></tr>
+        </tbody>
+      </table>
+      <p class="meta">해석: AIO는 VM 프로세스(qemu)가 CPU+메모리 상단을 차지하고 있으며, 사용자층에서 보이는 부하는 가상머신 하위 계층의 자원 집중형입니다.</p>
+    </div>
+
+    <div class="panel">
+      <h2>5) MGMT: 프로세스 리소스 Top</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th><th>PID</th><th>User</th><th>CPU%</th><th>MEM%</th><th>RSS(KiB)</th><th>주요 프로세스</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>CPU Top-1</td><td>3020004</td><td>user1</td><td>95.0</td><td>0.1</td><td>117,872</td><td>kafka</td></tr>
+          <tr><td>CPU Top-2</td><td>409255</td><td>root</td><td>36.7</td><td>0.3</td><td>221,056</td><td>dockerd</td></tr>
+          <tr><td>CPU Top-3</td><td>2928593</td><td>root</td><td>4.7</td><td>1.5</td><td>1,008,320</td><td>k3s server</td></tr>
+          <tr><td>CPU Top-4</td><td>1108637</td><td>polkitd</td><td>3.7</td><td>1.5</td><td>1,032,312</td><td>sidekiq</td></tr>
+          <tr><td>CPU Top-5</td><td>1077074</td><td>user1</td><td>3.5</td><td>2.4</td><td>1,623,576</td><td>logstash</td></tr>
+          <tr><td>CPU Top-6</td><td>1072557</td><td>user1</td><td>1.5</td><td>1.6</td><td>1,091,896</td><td>kafka</td></tr>
+          <tr><td>CPU Top-7</td><td>2919496</td><td>nobody</td><td>2.6</td><td>0.8</td><td>568,872</td><td>prometheus</td></tr>
+          <tr><td>CPU Top-8</td><td>1072899</td><td>user1</td><td>4.7</td><td>1.5</td><td>3263800 </td><td>elasticsearch</td></tr>
+        </tbody>
+      </table>
+      <p class="meta">* 일부 값은 긴 출력 라인 정렬 제약으로 정밀 RSS 값이 요약 축약됨. 핵심 추세는 프로세스 1~2개가 단일 CPU 바운드 특성으로 뚜렷하게 높음.</p>
+    </div>
+
+    <div class="panel">
+      <h2>6) MGMT: 컨테이너 사용량 Top (docker stats)</h2>
+      <div class="grid">
+        <div>
+          <h3>CPU Top (상위 15)</h3>
+          <table>
+            <thead><tr><th>Container</th><th>CPU%</th><th>Mem Usage</th><th>Mem%</th><th>NetIO</th></tr></thead>
+            <tbody>
+              <tr><td>gitlab</td><td>0.38%</td><td>5.346GiB / 16GiB</td><td>33.41%</td><td>234MB / 429MB</td></tr>
+              <tr><td>kafka</td><td>6.52%</td><td>1.261GiB / 2GiB</td><td>63.04%</td><td>1.88GB / 1.93GB</td></tr>
+              <tr><td>logstash-consumer</td><td>1.14%</td><td>1.532GiB / 2GiB</td><td>76.62%</td><td>1.81GB / 367MB</td></tr>
+              <tr><td>logstash</td><td>0.99%</td><td>1.755GiB / 2GiB</td><td>87.75%</td><td>166MB / 1.77GB</td></tr>
+              <tr><td>elasticsearch</td><td>1.85%</td><td>3.016GiB / 4GiB</td><td>75.41%</td><td>473MB / 81.2MB</td></tr>
+              <tr><td>supabase-kong</td><td>0.95%</td><td>1.644GiB / 62.27GiB</td><td>2.64%</td><td>150kB / 107kB</td></tr>
+              <tr><td>prometheus</td><td>3.49%</td><td>487.5MiB / 62.27GiB</td><td>0.76%</td><td>5.48GB / 187MB</td></tr>
+              <tr><td>sonarqube</td><td>0.71%</td><td>2.969GiB / 4GiB</td><td>74.23%</td><td>434MB / 2.54GB</td></tr>
+              <tr><td>keycloak</td><td>0.18%</td><td>1.075GiB / 62.27GiB</td><td>1.73%</td><td>42.7MB / 50.5MB</td></tr>
+              <tr><td>vault</td><td>6.79%</td><td>181.6MiB / 62.27GiB</td><td>0.28%</td><td>40.5MB / 93.7MB</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>Mem Top (상위 15)</h3>
+          <table>
+            <thead><tr><th>Container</th><th>Mem Usage</th><th>Mem%</th><th>CPU%</th><th>NetIO</th></tr></thead>
+            <tbody>
+              <tr><td>gitlab</td><td>5.346GiB / 16GiB</td><td>33.41%</td><td>0.38%</td><td>234MB / 429MB</td></tr>
+              <tr><td>sonarqube</td><td>2.969GiB / 4GiB</td><td>74.23%</td><td>0.71~2.17%</td><td>434MB / 2.54GB</td></tr>
+              <tr><td>elasticsearch</td><td>3.016GiB / 4GiB</td><td>75.41%</td><td>1.85%</td><td>473MB / 81.2MB</td></tr>
+              <tr><td>supabase-kong</td><td>1.644GiB / 62.27GiB</td><td>2.64%</td><td>0.95%</td><td>150kB / 107kB</td></tr>
+              <tr><td>logstash</td><td>1.755GiB / 2GiB</td><td>87.75%</td><td>0.99%</td><td>166MB / 1.77GB</td></tr>
+              <tr><td>logstash-consumer</td><td>1.532GiB / 2GiB</td><td>76.62%</td><td>1.14%</td><td>1.81GB / 367MB</td></tr>
+              <tr><td>kafka</td><td>1.261GiB / 2GiB</td><td>63.04%</td><td>6.52%</td><td>1.88GB / 1.93GB</td></tr>
+              <tr><td>k3d-mgmt-server-0</td><td>2.692GiB / 62.27GiB</td><td>4.32%</td><td>4.71%</td><td>5.5GB / 2.5GB</td></tr>
+              <tr><td>realtime-dev.supabase-realtime</td><td>306.4MiB / 62.27GiB</td><td>0.48%</td><td>0.06%</td><td>57.9MB / 90.2MB</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>7) MGMT: Kubernetes 파드/PNode</h2>
+      <div class="grid">
+        <div>
+          <h3>Node</h3>
+          <table>
+            <thead><tr><th>Node</th><th>상태</th><th>CPU</th><th>CPU%</th><th>MEM</th><th>MEM%</th></tr></thead>
+            <tbody>
+              <tr><td>k3d-mgmt-server-0</td><td>Ready</td><td>72m</td><td>0%</td><td>2755Mi</td><td>4%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>Pod Top (CPU)</h3>
+          <table>
+            <thead><tr><th>Namespace</th><th>Name</th><th>CPU</th><th>MEM</th></tr></thead>
+            <tbody>
+              <tr><td>argocd</td><td>argocd-application-controller-0</td><td>43m</td><td>915Mi</td></tr>
+              <tr><td>argocd</td><td>argocd-redis-798565fd74-pkz2s</td><td>3m</td><td>16Mi</td></tr>
+              <tr><td>argocd</td><td>argocd-repo-server-86d6d549fd-rwhlb</td><td>3m</td><td>116Mi</td></tr>
+              <tr><td>kube-system</td><td>metrics-server-786d997795-j6dt2</td><td>3m</td><td>53Mi</td></tr>
+              <tr><td>argocd</td><td>argocd-server-9756cfd59-4kg8r</td><td>1m</td><td>82Mi</td></tr>
+              <tr><td>kube-system</td><td>traefik-d98ccfdf6-lhzjx</td><td>1m</td><td>81Mi</td></tr>
+              <tr><td>argocd</td><td>argocd-applicationset-controller-77497b89df-t9cbc</td><td>1m</td><td>47Mi</td></tr>
+              <tr><td>argocd</td><td>argocd-notifications-controller-6c5f7c5dcc-p5x6l</td><td>1m</td><td>43Mi</td></tr>
+              <tr><td>kube-system</td><td>coredns-d79dd998d-vqvpk</td><td>2m</td><td>35Mi</td></tr>
+              <tr><td>kube-system</td><td>local-path-provisioner-5d9d9885bc-h7spn</td><td>1m</td><td>29Mi</td></tr>
+            </tbody>
+          </table>
+          <p class="meta">파드들은 비교적 안정적이며, 호스트 병목은 주로 대형 컨테이너/서비스에서 발생.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>8) 분석 및 권고</h2>
+      <h3>AIO</h3>
+      <ol>
+        <li><strong>최우선 이슈:</strong> VM 엔진(qemu) 3개가 CPU/메모리를 상위 점유. 현재 Load Avg는 CPU 초과 가능성이 높음. VM 수요가 피크인지 확인 필요.</li>
+        <li><strong>권고:</strong> RabbitMQ 상태 확인 스크립트(307% 점유)와 같은 순간성 프로세스를 제외한 기준으로 재측정하여 장기 평균을 판단.</li>
+        <li><strong>권고:</strong> docker socket 권한 정책 정비(현재 사용자 비특권 접근 제한). 모니터링/오토메이션 계정에 docker 그룹/권한 명시 필요.</li>
+        <li><strong>권고:</strong> kubectl 관리 오케스트레이션은 <code>--kubeconfig ~/.kube/acer-kubeadm.yaml</code>으로 강제 지정 후 재측정.</li>
+        <li><strong>권고:</strong> context가 정상인지 먼저 확인(예: <code>kubectl --kubeconfig ~/.kube/acer-kubeadm.yaml config get-contexts</code>).</li>
+        <li><strong>권고:</strong> virsh 미설치면 Libvirt 관리가 불가하므로 VM 가시성 확보를 위해 별도 도구(예: OpenStack CLI/API or libvirt 패키지) 통합.</li>
+      </ol>
+      <h3>MGMT</h3>
+      <ol>
+        <li><strong>핵심 포인트:</strong> Node/파드 자체 상태는 안정적이나 컨테이너 메모리 집적이 큼. GitLab, SonarQube, Elasticsearch, Logstash, Kafka가 메모리 상위권.</li>
+        <li><strong>권고:</strong> 각 컨테이너의 requests/limits 정책 재정의(특히 logstash, sonarqube, elasticsearch, kafka).</li>
+        <li><strong>권고:</strong> gitlab/kafka/suricata 계열 JVM 컨테이너는 Heap/Metaspace 정책 점검으로 OOM 및 GC 흔들림 방지.</li>
+        <li><strong>권고:</strong> tailscale/bridges 다량 네트워크 인터페이스는 실사용 트래픽 상한 및 MTU/오버헤드 정합성 추가 검토.</li>
+        <li><strong>권고:</strong> 매 5분 간격 스냅샷 + 5일치 시계열 보관으로 추세 기반 임계치 알람 구축.</li>
+      </ol>
+    </div>
+
+    <details>
+      <summary>원시 수집 로그 핵심 발췌 (수정 없이 그대로)</summary>
+      <pre>
+== AIO ==
+acer-aio
+2026-07-09 10:05:29 +00:00
+6.52 5.39 4.91 2/2274 1396476
+Mem:            23Gi        19Gi       2.2Gi        74Mi       2.1Gi       3.9Gi
+Swap:             0B          0B          0B
+Docker version 29.6.0
+Containers: 34 / Running 34
+Current-context: fallback none (localhost:8080 connection refused when kubeconfig not forced)
+VIRSH_NOT_INSTALLED
+KUBECONFIG_HINT: ~/.kube/acer-kubeadm.yaml exists, but default config is not set
+
+== MGMT ==
+acer-mgmt
+2026-07-09 19:05:29 +09:00
+1.57 1.73 1.87 3/4899 3020404
+Mem:            62Gi        31Gi       1.1Gi       827Mi        31Gi        30Gi
+Swap:           31Gi       1.1Gi        30Gi
+Containers: 60 (Running 60)
+KUBERNETES node: k3d-mgmt-server-0 Ready
+KUBERNETES node use: 72m CPU, 2755Mi Memory (4%)
+      </pre>
+    </details>
+
+    <details>
+      <summary>수집/실행 명령 히스토리(요약)</summary>
+      <pre>
+ssh -i C:\Users\user\Downloads\acer.pem ubuntu@172.16.1.10 "bash /tmp/collect_resource.sh"
+ssh -i C:\Users\user\Downloads\acer.pem user1@acer-mgmt "bash /tmp/collect_resource.sh"
+ssh -i ... "cat /proc/net/dev" 등 실시간 항목별 보완 수집
+      </pre>
+    </details>
+  </div>
+</body>
+</html>
