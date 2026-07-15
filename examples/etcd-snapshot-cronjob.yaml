@@ -24,7 +24,7 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
-                  # Portfolio example only.
+                  # 공개 문서용 예시입니다. 실제 운영값은 포함하지 않습니다.
                   # 1. Create etcd snapshot.
                   # 2. Generate SHA256SUMS.
                   # 3. Upload to S3-compatible object storage.

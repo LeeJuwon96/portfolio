@@ -1,6 +1,6 @@
-# Kubernetes Backup & Restore Portfolio
+# Kubernetes 백업·복구 프로젝트 정리
 
-Kubernetes 기반 팀 프로젝트에서 백업/복구 파트를 담당하며 정리한 포트폴리오 문서입니다.
+Kubernetes 기반 팀 프로젝트에서 백업/복구 파트를 담당하며 정리한 기술 문서입니다.
 
 이 저장소는 실제 운영 저장소의 원본 파일을 복사한 것이 아니라, 프로젝트에서 설계하고 검증한 백업 구조를 **민감정보 없이 재구성한 제출용 자료**입니다.
 
@@ -85,15 +85,15 @@ mgmt 서버에서는 컨테이너로 실행되는 DB와 host volume을 백업했
 
 ## 예시 파일
 
-실제 운영 파일이 아니라, 포트폴리오 설명용으로 재작성한 예시입니다.
+실제 운영 파일이 아니라, 민감정보를 제거해 공개 문서용으로 재작성한 예시입니다.
 
 - [Velero Schedule 예시](examples/velero-schedule.yaml)
 - [etcd CronJob 예시](examples/etcd-snapshot-cronjob.yaml)
 - [mgmt DB 백업 흐름 예시](examples/mgmt-db-backup-flow.sh)
 
-## 팀 프로젝트 public source 참고
+## 팀 프로젝트 공개 저장소 참고
 
-팀 프로젝트 저장소가 public으로 공개되어 있어, 백업 파트와 관련된 구현 위치를 별도 문서로 정리했습니다. 이 포트폴리오 저장소에는 운영 원본 파일을 그대로 복사하지 않고, 민감정보를 제거한 설명과 예시만 포함했습니다.
+팀 프로젝트 저장소가 공개되어 있어, 백업 파트와 관련된 구현 위치를 별도 문서로 정리했습니다. 이 저장소에는 운영 원본 파일을 그대로 복사하지 않고, 민감정보를 제거한 설명과 예시만 포함했습니다.
 
 - [팀 프로젝트 백업 구현 위치 정리](docs/public-source-map.md)
 - [백업 구현 상세 설명](docs/implementation-details.md)

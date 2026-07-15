@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Portfolio example only.
+# 공개 문서용 예시입니다. 실제 운영값은 포함하지 않습니다.
 # This script shows the backup flow without real secrets or internal paths.
 
 STAMP="$(TZ=Asia/Seoul date +%Y%m%dT%H%M%SKST)"

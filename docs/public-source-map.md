@@ -1,8 +1,8 @@
-# Public Team Project Source Map
+# 팀 프로젝트 백업 구현 위치
 
-이 문서는 public으로 공개된 팀 프로젝트 저장소에서 백업 파트가 어디에 구현되어 있는지 정리한 자료입니다.
+이 문서는 공개된 팀 프로젝트 저장소에서 백업 파트가 어디에 구현되어 있는지 정리한 자료입니다.
 
-포트폴리오 저장소에는 운영 파일을 그대로 복사하지 않고, 구현 의도와 구조를 설명하는 방식으로 재작성했습니다.
+이 저장소에는 운영 파일을 그대로 복사하지 않고, 구현 의도와 구조를 설명하는 방식으로 재작성했습니다.
 
 ## GitOps 백업 설정
 
@@ -51,16 +51,16 @@
 | `ktcloud4-acer/acer-mgmt/docs/runbooks/backup-beginner-guide.html` | 백업 입문자용 설명 자료 |
 | `ktcloud4-acer/acer-mgmt/docs/runbooks/backup-architecture-overview.html` | 백업 구조 요약 |
 
-## 포트폴리오에서 재구성한 이유
+## 공개 문서로 재구성한 이유
 
-팀 프로젝트 원본에는 내부 도메인, 팀원 prefix, 운영 경로, secret 연동 방식 등 실제 환경 정보가 포함될 수 있습니다. 따라서 포트폴리오에는 원본 파일을 그대로 복사하지 않고 다음 기준으로 재작성했습니다.
+팀 프로젝트 원본에는 내부 도메인, 팀원 prefix, 운영 경로, secret 연동 방식 등 실제 환경 정보가 포함될 수 있습니다. 따라서 이 저장소에는 원본 파일을 그대로 복사하지 않고 다음 기준으로 재작성했습니다.
 
 - 실제 token, key, password 제외
 - 내부 endpoint와 bucket 이름 일반화
 - 팀원별 prefix 제거
 - 운영 경로는 설명 가능한 수준으로만 표현
-- 면접에서 설명하기 쉬운 구조 중심으로 재정리
+- 구현 구조 중심으로 재정리
 
 ## 요약
 
-“팀 프로젝트의 public repository에는 실제 구현 파일이 있고, 제 포트폴리오에는 해당 백업 파트를 민감정보 없이 재구성했습니다. Velero, etcd snapshot, PostgreSQL dump, restic, MinIO, AWS S3 mirror를 각각 어떤 장애 상황에 대응하기 위해 구성했는지 설명할 수 있도록 정리했습니다.”
+팀 프로젝트 공개 저장소에는 실제 구현 파일이 있고, 이 저장소에는 백업 파트를 민감정보 없이 재구성한 문서와 예시가 있습니다. Velero, etcd snapshot, PostgreSQL dump, restic, MinIO, AWS S3 mirror가 각각 어떤 장애 상황에 대응하는지 중심으로 정리했습니다.
