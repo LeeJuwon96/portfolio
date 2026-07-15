@@ -61,6 +61,6 @@
 - 운영 경로는 설명 가능한 수준으로만 표현
 - 면접에서 설명하기 쉬운 구조 중심으로 재정리
 
-## 면접 답변용 요약
+## 요약
 
 “팀 프로젝트의 public repository에는 실제 구현 파일이 있고, 제 포트폴리오에는 해당 백업 파트를 민감정보 없이 재구성했습니다. Velero, etcd snapshot, PostgreSQL dump, restic, MinIO, AWS S3 mirror를 각각 어떤 장애 상황에 대응하기 위해 구성했는지 설명할 수 있도록 정리했습니다.”
