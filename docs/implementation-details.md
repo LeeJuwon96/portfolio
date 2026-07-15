@@ -1,6 +1,6 @@
 # Backup Implementation Details
 
-이 문서는 백업 파트의 구현 흐름을 면접 또는 포트폴리오 설명용으로 정리한 자료입니다.
+이 문서는 백업 파트의 구현 흐름을 정리한 자료입니다.
 
 ## 1. Kubernetes 리소스 백업
 
