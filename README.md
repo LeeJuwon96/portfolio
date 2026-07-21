@@ -98,6 +98,15 @@ mgmt 서버에서는 컨테이너로 실행되는 DB와 host volume을 백업했
 - [팀 프로젝트 백업 구현 위치 정리](docs/public-source-map.md)
 - [백업 구현 상세 설명](docs/implementation-details.md)
 
+## 공개 구현 증거와 기여 범위
+
+팀 프로젝트 원본 코드와 Git 커밋을 기준으로 구현 증거와 개인 기여 범위를 별도 문서로 정리했습니다.
+
+- [MinIO → AWS S3 offsite 구현 증거](docs/evidence/s3-offsite-implementation.md)
+- [팀 프로젝트 결과와 개인 기여 범위](docs/project-contribution-scope.md)
+
+S3 Lifecycle 정책은 실제 AWS 환경에 적용했지만 공개 저장소에는 설정 코드가 남아 있지 않아, 발표자료를 보조 근거로 표시하고 추가 공개 증거가 필요한 항목으로 구분했습니다.
+
 ## 보안 처리
 
 이 저장소에는 다음 정보를 포함하지 않습니다.

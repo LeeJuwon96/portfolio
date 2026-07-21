@@ -283,8 +283,8 @@
 
 ### 최우선
 
-1. **S3 구현 증거 보강**: MinIO→AWS S3 복제 스크립트·timer·실행 로그·S3 객체와 Lifecycle 설정 중 공개 가능한 증거를 연결한다.
-2. **팀 기여와 개인 기여 구분**: OpenStack, CI/CD, 모니터링은 팀 결과와 본인 행동을 별도 표기한다.
+1. **S3 구현 증거 보강 - 일부 완료**: [MinIO→AWS S3 구현 증거](evidence/s3-offsite-implementation.md)에 script·service·timer·커밋·테스트를 연결했다. Lifecycle은 공개 저장소에 설정 코드가 없어 비식별 AWS Console 화면 또는 CLI 출력 추가가 남아 있다.
+2. **팀 기여와 개인 기여 구분 - 완료**: [팀 프로젝트 결과와 개인 기여 범위](project-contribution-scope.md)에 OpenStack·CI/CD·모니터링의 팀 결과와 백업 파트의 직접 커밋을 분리했다.
 3. **민감정보·내부정보 재점검**: 공개 자료에 사설 IP, 사용자명, 로컬 개인키 경로, 실제 서버 경로가 포함되어 있다. `resource_runtime_report_aio_mgmt (1).html`, 발표 PDF, `backup-presentation.md`를 우선 확인한다.
 4. **검증 증거 추가**: 실행 명령, 예상 출력, 실패 사례, 실제 복구 전후 검증을 민감정보 제거 후 캡처한다.
 
