@@ -79,7 +79,7 @@ restic restore <snapshot-id> --target <restore-stage>
 1. MinIO에서 최신 snapshot 다운로드
 2. checksum 확인
 3. `etcdutl snapshot status` 실행
-4. 임시 디렉터리에 restore 테스트
+4. 임시 디렉터리에 restore 테스트.
 
 핵심 검증:
 
