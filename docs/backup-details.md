@@ -75,7 +75,7 @@ restic을 사용한 이유:
 MinIO만 있으면 mgmt 서버 장애 시 백업 저장소까지 함께 영향을 받을 수 있습니다. 그래서 mgmt MinIO의 주요 백업 bucket을 AWS S3로 mirror하고, S3에는 Lifecycle 정책을 적용했습니다.
 
 ```text
-원본 데이터
+원본 데이터.
   -> mgmt MinIO
   -> AWS S3 offsite mirror
 ```
