@@ -1,6 +1,8 @@
-# Restore Runbook
+# 복구 절차 설계
 
-이 문서는 실제 운영 명령어를 그대로 담은 것이 아니라, 민감정보를 제거해 공개 문서용으로 정리한 복구 절차입니다.
+> 문서 목적: 실제 복구 완료 결과가 아니라, 장애 상황에서 사용할 복구 순서와 확인 기준을 정리합니다.
+
+공유 프로젝트 환경에 영향을 줄 수 있어 end-to-end restore는 수행하지 않았습니다. 이 문서의 명령은 민감정보를 제거한 절차 예시이며, 실제 적용 전에는 격리된 환경에서 검증해야 합니다.
 
 ## 1. Namespace 삭제 복구
 
@@ -79,7 +81,7 @@ restic restore <snapshot-id> --target <restore-stage>
 1. MinIO에서 최신 snapshot 다운로드
 2. checksum 확인
 3. `etcdutl snapshot status` 실행
-4. 임시 디렉터리에 restore 테스트.
+4. 격리된 환경에서 임시 디렉터리 restore 수행
 
 핵심 검증:
 
@@ -93,4 +95,4 @@ etcdutl snapshot restore snapshot.db --data-dir ./restore-test
 
 etcd snapshot은 namespace 하나를 복구하기 위한 도구가 아닙니다. etcd는 클러스터 control-plane 상태를 저장하므로, 잘못 복구하면 클러스터 전체 상태에 영향을 줄 수 있습니다.
 
-따라서 발표와 테스트에서는 실제 restore보다 snapshot 검증과 restore rehearsal을 우선했습니다.
+따라서 프로젝트에서는 실제 restore를 수행하지 않고 snapshot 상태와 checksum을 확인했으며, restore 순서와 주의사항을 문서로 정리했습니다.
