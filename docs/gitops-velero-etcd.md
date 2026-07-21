@@ -1,4 +1,6 @@
-# GitOps Backup: Velero Schedule and etcd CronJob
+# Kubernetes 백업 자동화
+
+> 문서 목적: Argo CD로 관리한 Velero Schedule과 etcd snapshot CronJob의 역할과 차이를 설명합니다.
 
 ## 왜 GitOps로 관리했는가
 
