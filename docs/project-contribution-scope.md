@@ -57,7 +57,7 @@
 - [`0360868` Add backup architecture runbooks](https://github.com/ktcloud4-acer/acer-mgmt/commit/036086808ffaafc05af39b12f09c490461207d55)
 - [`5ba7b2e` Add Vault backup secret bootstrap runbook](https://github.com/ktcloud4-acer/acer-docs/commit/5ba7b2e914ede9a10e5fe5b258b4ce4582e9332f)
 
-## 면접에서 사용할 설명
+## 설명
 
 ### 팀 전체 프로젝트
 
@@ -65,7 +65,7 @@
 
 ### 나의 직접 기여
 
-> 저는 백업·복구 파트를 담당했습니다. Velero Schedule과 etcd snapshot CronJob을 GitOps로 구성하고, mgmt 서버의 DB·Storage·Config 백업과 MinIO→AWS S3 offsite mirror를 script·systemd timer로 자동화했습니다. 또한 backup credential을 Vault Agent와 External Secrets로 외부화하고, 장애 유형별 Runbook을 작성했습니다. 이 범위는 공개 저장소의 20개 비병합 커밋으로 확인할 수 있습니다.
+> 저는 백업·복구 파트를 담당했습니다. Velero Schedule과 etcd snapshot CronJob을 GitOps로 구성하고, mgmt 서버의 DB·Storage·Config 백업과 MinIO→AWS S3 offsite mirror를 script·systemd timer로 자동화했습니다. 또한 backup credential을 Vault Agent와 External Secrets로 외부화하고, 장애 유형별 Runbook을 작성했습니다. 
 
 ### 협업 영역
 
