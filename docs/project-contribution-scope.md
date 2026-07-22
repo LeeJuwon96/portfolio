@@ -20,7 +20,7 @@
 
 ## 영역별 구분
 
-| 영역 | 팀 전체 결과 | 이주원님의 공개 Git 근거 | 포트폴리오 표현 |
+| 영역 | 팀 전체 결과 | 공개 Git 근거 | 포트폴리오 표현 |
 | --- | --- | --- | --- |
 | OpenStack | Kolla-Ansible 기반 AIO, Nova·Neutron·Glance·Keystone 환경 | `acer-aio`에서 `LeeJuwon96` 명의 직접 커밋은 확인되지 않음 | “팀이 구축한 OpenStack 환경에서 Kubernetes와 백업 파트를 연동·검증” |
 | CI/CD | GitLab Runner, Harbor, SonarQube, Argo CD 기반 배포 흐름 | `acer-web`에서 직접 커밋은 확인되지 않음 | “팀 CI/CD 흐름을 이해하고 백업 manifest를 Argo CD GitOps로 연동” |
